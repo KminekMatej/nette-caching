@@ -39,6 +39,11 @@ interface Storage
 	 * Removes items from the cache by conditions.
 	 */
 	function clean(array $conditions): void;
+
+	/**
+	 * Load items from the cache by conditions.
+	 */
+	function readBy(array $conditions): array;
 }
 
 

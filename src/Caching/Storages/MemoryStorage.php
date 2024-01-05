@@ -49,4 +49,9 @@ class MemoryStorage implements Nette\Caching\Storage
 			$this->data = [];
 		}
 	}
+
+    public function readBy(array $conditions): array
+    {
+		return empty($conditions[Nette\Caching\Cache::All]) ? [] : $this->data;
+    }
 }

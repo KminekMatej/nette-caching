@@ -185,4 +185,14 @@ class MemcachedStorage implements Nette\Caching\Storage, Nette\Caching\BulkReade
 			}
 		}
 	}
+
+
+    public function readBy(array $conditions): array
+    {
+        if (!$this->journal) {
+            throw new Nette\InvalidStateException('CacheJournal has not been provided.');
+        }
+
+        return $this->journal->read($conditions);
+    }
 }

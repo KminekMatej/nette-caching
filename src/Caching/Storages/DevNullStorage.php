@@ -41,4 +41,9 @@ class DevNullStorage implements Nette\Caching\Storage
 	public function clean(array $conditions): void
 	{
 	}
+
+    public function readBy(array $conditions): array
+    {
+        return [];
+    }
 }

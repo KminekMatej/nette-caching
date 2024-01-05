@@ -371,4 +371,15 @@ class FileStorage implements Nette\Caching\Storage
 		fclose($handle);
 		@unlink($file); // @ - file may not already exist
 	}
+
+    public function readBy(array $conditions): array
+    {
+        if (!$this->journal) {
+            throw new Nette\InvalidStateException('CacheJournal has not been provided.');
+        }
+
+        $keys = $this->journal->read($conditions);
+
+        return array_map(fn(string $key): mixed => $this->read($key), $keys);
+    }
 }

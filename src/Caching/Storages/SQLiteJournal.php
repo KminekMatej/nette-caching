@@ -142,4 +142,48 @@ class SQLiteJournal implements Journal
 
 		return $keys;
 	}
+    
+    public function read(array $conditions): array
+    {
+        if (!isset($this->pdo)) {
+			$this->open();
+		}
+
+		$unions = $args = [];
+
+        if (!empty($conditions[Cache::All])) {
+            $unions = [
+                'SELECT DISTINCT key FROM tags WHERE 1',
+                'SELECT DISTINCT key FROM priorities WHERE 1',
+            ];
+        }
+
+        if (!empty($conditions[Cache::Tags])) {
+            $tags = (array) $conditions[Cache::Tags];
+			$unions[] = 'SELECT DISTINCT key FROM tags WHERE tag IN (?' . str_repeat(', ?', count($tags) - 1) . ')';
+			$args = $tags;
+		}
+
+		if (!empty($conditions[Cache::Priority])) {
+			$unions[] = 'SELECT DISTINCT key FROM priorities WHERE priority <= ?';
+			$args[] = (int) $conditions[Cache::Priority];
+		}
+
+		if (empty($unions)) {
+			return [];
+		}
+
+		$unionSql = implode(' UNION ', $unions);
+
+		$this->pdo->exec('BEGIN IMMEDIATE');
+
+		$stmt = $this->pdo->prepare($unionSql);
+		$stmt->execute($args);
+        $keys = array_unique($stmt->fetchAll(\PDO::FETCH_COLUMN, 0));
+
+        $this->pdo->exec('COMMIT');
+        
+        return $keys;
+    }
+
 }

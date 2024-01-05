@@ -145,4 +145,44 @@ class SQLiteStorage implements Nette\Caching\Storage, Nette\Caching\BulkReader
 			$this->pdo->prepare($sql)->execute($args);
 		}
 	}
+
+    public function readBy(array $conditions): array
+    {
+		if (!empty($conditions[Cache::All])) {
+            $stmt = $this->pdo->prepare('SELECT key, data, slide FROM cache WHERE 1 AND (expire IS NULL OR expire >= ?)');
+            $stmt->execute([time()]);
+            $result = [];
+            $updateSlide = [];
+            foreach ($stmt->fetchAll(\PDO::FETCH_ASSOC) as $row) {
+                if ($row['slide'] !== null) {
+                    $updateSlide[] = $row['key'];
+                }
+
+                $result[$row['key']] = unserialize($row['data']);
+            }
+
+            if (!empty($updateSlide)) {
+                $stmt = $this->pdo->prepare('UPDATE cache SET expire = ? + slide WHERE key IN(?' . str_repeat(',?', count($updateSlide) - 1) . ')');
+                $stmt->execute(array_merge([time()], $updateSlide));
+            }
+
+            return $result;
+        } elseif(!empty($conditions[Cache::Tags])){
+            $tags = (array) $conditions[Cache::Tags];
+            $sql = 'SELECT cache.key, cache.data, cache.slide FROM cache LEFT JOIN tags ON WHERE tags.tag IN(?' . str_repeat(',?', count($tags) - 1) . ') AND (expire IS NULL OR expire >= ?)';
+
+            $stmt = $this->pdo->prepare($sql)->execute(array_merge($tags, [time()])); 
+            
+            $updateSlide = [];
+            foreach ($stmt->fetchAll(\PDO::FETCH_ASSOC) as $row) {
+                if ($row['slide'] !== null) {
+                    $updateSlide[] = $row['key'];
+                }
+
+                $result[$row['key']] = unserialize($row['data']);
+            }
+
+            return $result;
+        }
+    }
 }

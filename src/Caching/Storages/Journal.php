@@ -25,6 +25,12 @@ interface Journal
 	 * @return array|null of removed items or null when performing a full cleanup
 	 */
 	function clean(array $conditions): ?array;
+
+	/**
+	 * Reads entries from journal.
+	 * @return string[] keys stored in journal
+	 */
+	function read(array $conditions): ?array;
 }
 
 
